@@ -2,7 +2,7 @@ require_relative 'test_helper'
 require 'vcr'
 
 # creation of google's example of guest book
-class CreateGuestbookGo < MiniTest::Test
+class CreateGuestbookGoNamedParams < MiniTest::Test
   def test_create_guestbook_entities
     VCR.configure do |c|
       c.cassette_library_dir = 'test/cassettes'
@@ -14,7 +14,7 @@ class CreateGuestbookGo < MiniTest::Test
     end
 
     # WebMock.allow_net_connect!
-    VCR.use_cassette('kubernetes_guestbook') do # , record: :new_episodes) do
+    VCR.use_cassette('kubernetes_guestbook_named_params') do # , record: :new_episodes) do
       client = Kubeclient::Client.new('https://fake.host.com:8443/api/', 'v1')
 
       testing_ns = Kubeclient::Resource.new
@@ -43,12 +43,12 @@ class CreateGuestbookGo < MiniTest::Test
       delete_services(client, testing_ns.metadata.name, services)
       delete_replication_controllers(client, testing_ns.metadata.name, replicators)
 
-      client.delete_namespace(testing_ns.metadata.name)
+      client.delete_namespace(name: testing_ns.metadata.name)
     end
   end
 
   def delete_namespace(client, namespace_name)
-    client.delete_namespace(namespace_name)
+    client.delete_namespace(name: namespace_name)
   rescue Kubeclient::ResourceNotFoundError => exception
     assert_equal(404, exception.error_code)
   end
@@ -87,10 +87,10 @@ class CreateGuestbookGo < MiniTest::Test
     services.each do |service|
       begin
         if service.instance_of?(Kubeclient::Resource)
-          client.delete_service(service.metadata.name, namespace)
+          client.delete_service(name: service.metadata.name, namespace: namespace)
         else
           # it's just a string - service name
-          client.delete_service(service, namespace)
+          client.delete_service(name: service, namespace: namespace)
         end
       rescue Kubeclient::ResourceNotFoundError => exception
         assert_equal(404, exception.error_code)
@@ -103,10 +103,10 @@ class CreateGuestbookGo < MiniTest::Test
     replication_controllers.each do |rc|
       begin
         if rc.instance_of?(Kubeclient::Resource)
-          client.delete_replication_controller(rc.metadata.name, namespace)
+          client.delete_replication_controller(name: rc.metadata.name, namespace: namespace)
         else
           # it's just a string - rc name
-          client.delete_replication_controller(rc, namespace)
+          client.delete_replication_controller(name: rc, namespace: namespace)
         end
       rescue Kubeclient::ResourceNotFoundError => exception
         assert_equal(404, exception.error_code)
